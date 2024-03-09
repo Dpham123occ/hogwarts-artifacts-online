@@ -1,5 +1,6 @@
 package edu.tcu.hogwartsartifactsonline.artifact;
 
+import edu.tcu.hogwartsartifactsonline.artifact.utils.IdWorker;
 import edu.tcu.hogwartsartifactsonline.wizard.Wizard;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,14 +19,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ArtifactServiceTest {
 
     @Mock
     ArtifactRepository artifactRepository;
+
+    @Mock
+    IdWorker idWorker;
+
     @InjectMocks
     ArtifactService artifactService;
 
@@ -116,12 +120,99 @@ class ArtifactServiceTest {
         given(artifactRepository.findAll()).willReturn(this.artifacts);
 
         //When
-        List<Artifact> actualArtifacts = artifactService.findALl();
+        List<Artifact> actualArtifacts = artifactService.findAll();
 
         //Then
         assertThat(actualArtifacts.size()).isEqualTo(this.artifacts.size());
         verify(artifactRepository, times(1)).findAll();
     }
 
+    @Test
+    void testSaveSuccess() {
+        // Given
+        Artifact newArtifact = new Artifact();
+        newArtifact.setName("Artifact 3");
+        newArtifact.setDescription("Description...");
+        newArtifact.setImageUrl("ImageUrl...");
+
+        given(idWorker.nextId()).willReturn(123456L);
+        given(artifactRepository.save(newArtifact)).willReturn(newArtifact);
+
+        // When
+        Artifact savedArtifact = artifactService.save(newArtifact);
+
+        // Then
+        assertThat(savedArtifact.getId()).isEqualTo("123456");
+        assertThat(savedArtifact.getName()).isEqualTo(newArtifact.getName());
+        assertThat(savedArtifact.getDescription()).isEqualTo(newArtifact.getDescription());
+        assertThat(savedArtifact.getImageUrl()).isEqualTo(newArtifact.getImageUrl());
+        verify(artifactRepository, times(1)).save(newArtifact);
+    }
+
+    @Test
+    void testUpdateSuccess() {
+        // Given
+        Artifact oldArtifact = new Artifact();
+        oldArtifact.setId("1250808601744904192");
+        oldArtifact.setName("Invisibility Cloak");
+        oldArtifact.setDescription("An invisibility cloak is used to make the wearer invisible.");
+        oldArtifact.setImageUrl("ImageUrl");
+
+        Artifact update = new Artifact();
+        // update.setId("1250808601744904192");
+        update.setName("Invisibility Cloak");
+        update.setDescription("A new description.");
+        update.setImageUrl("ImageUrl");
+
+        given(this.artifactRepository.findById("1250808601744904192")).willReturn(Optional.of(oldArtifact));
+        given(this.artifactRepository.save(oldArtifact)).willReturn(oldArtifact);
+
+        // When
+        Artifact updatedArtifact = this.artifactService.update("1250808601744904192", update);
+
+        // Then
+        assertThat(updatedArtifact.getId()).isEqualTo("1250808601744904192");
+        assertThat(updatedArtifact.getDescription()).isEqualTo(update.getDescription());
+        verify(this.artifactRepository, times(1)).findById("1250808601744904192");
+        verify(this.artifactRepository, times(1)).save(oldArtifact);
+    }
+
+    @Test
+    void testUpdateNotFound() {
+        // Given
+        Artifact update = new Artifact();
+        update.setName("Invisibility Cloak");
+        update.setDescription("A new description.");
+        update.setImageUrl("ImageUrl");
+
+        given(artifactRepository.findById("1250808601744904192")).willReturn(Optional.empty());
+
+        // When
+        assertThrows(ArtifactNotFoundException.class, () -> {
+            artifactService.update("1250808601744904192", update);
+        });
+
+        // Then
+        verify(artifactRepository, times(1)).findById("1250808601744904192");
+    }
+
+    @Test
+    void testDeleteSuccess() {
+        // Given
+        Artifact artifact = new Artifact();
+        artifact.setId("1250808601744904192");
+        artifact.setName("Invisibility Cloak");
+        artifact.setDescription("An invisibility cloak is used to make the wearer invisible.");
+        artifact.setImageUrl("ImageUrl");
+
+        given(this.artifactRepository.findById("1250808601744904192")).willReturn(Optional.of(artifact));
+        doNothing().when(this.artifactRepository).deleteById("1250808601744904192");
+
+        // When
+        this.artifactService.delete("1250808601744904192");
+
+        // Then
+        verify(this.artifactRepository, times(1)).deleteById("1250808601744904192");
+    }
 
 }
