@@ -2,6 +2,7 @@ package edu.tcu.hogwartsartifactsonline.artifact;
 
 import edu.tcu.hogwartsartifactsonline.artifact.utils.IdWorker;
 import edu.tcu.hogwartsartifactsonline.wizard.Wizard;
+import edu.tcu.hogwartsartifactsonline.system.exception.ObjectNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -109,8 +111,8 @@ class ArtifactServiceTest {
         });
 
         //Then
-        assertThat(thrown).isInstanceOf(ArtifactNotFoundException.class)
-                          .hasMessage("Could not find artifact with Id 1250808601744904192");
+        assertThat(thrown).isInstanceOf(ObjectNotFoundException.class)
+                          .hasMessage("Could not find artifact with Id 1250808601744904192 :(");
         verify(this.artifactRepository, times(1)).findById("1250808601744904192");
     }
 
@@ -188,7 +190,7 @@ class ArtifactServiceTest {
         given(artifactRepository.findById("1250808601744904192")).willReturn(Optional.empty());
 
         // When
-        assertThrows(ArtifactNotFoundException.class, () -> {
+        assertThrows(ObjectNotFoundException.class, () -> {
             artifactService.update("1250808601744904192", update);
         });
 
@@ -215,4 +217,17 @@ class ArtifactServiceTest {
         verify(this.artifactRepository, times(1)).deleteById("1250808601744904192");
     }
 
+    @Test
+    void testDeleteNotFound() {
+        // Given
+        given(this.artifactRepository.findById("1250808601744904192")).willReturn(Optional.empty());
+
+        // When
+        assertThrows(ObjectNotFoundException.class, () -> {
+            this.artifactService.delete("1250808601744904192");
+        });
+
+        // Then
+        verify(this.artifactRepository, times(1)).findById("1250808601744904192");
+    }
 }
