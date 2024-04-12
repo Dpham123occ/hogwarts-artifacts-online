@@ -41,6 +41,9 @@ public class UserService {
     public HogwartsUser update(Integer userId, HogwartsUser update) {
         HogwartsUser oldHogwartsUser = this.userRepository.findById(userId)
                 .orElseThrow(() -> new ObjectNotFoundException("user", userId));
+        oldHogwartsUser.setUsername(update.getUsername());
+        oldHogwartsUser.setEnabled(update.isEnabled());
+        oldHogwartsUser.setRoles(update.getRoles());
         return this.userRepository.save(oldHogwartsUser);
     }
 
