@@ -2,6 +2,7 @@ package edu.tcu.hogwartsartifactsonline.hogwartsuser;
 
 import edu.tcu.hogwartsartifactsonline.system.exception.ObjectNotFoundException;
 import jakarta.transaction.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,9 +13,12 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository) {
+
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<HogwartsUser> findAll() {
@@ -28,6 +32,7 @@ public class UserService {
 
     public HogwartsUser save(HogwartsUser newHogwartsUser) {
         // We NEED to encode plain text password before saving to the DB! TODO
+        newHogwartsUser.setPassword(this.passwordEncoder.encode(newHogwartsUser.getPassword()));
         return this.userRepository.save(newHogwartsUser);
     }
 
