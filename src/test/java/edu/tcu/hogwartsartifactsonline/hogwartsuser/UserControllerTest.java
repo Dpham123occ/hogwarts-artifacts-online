@@ -37,7 +37,6 @@ class UserControllerTest {
 
     @Autowired
     ObjectMapper objectMapper;
-
     @MockBean
     UserService userService;
 
